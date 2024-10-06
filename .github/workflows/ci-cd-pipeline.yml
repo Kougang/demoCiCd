@@ -1,0 +1,49 @@
+name: CI/CD Pipeline with Security
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Setup Node.js (ou Python selon ton projet)
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20.10.0"
+
+      # Run static code analysis with SonarQube
+      - name: Run SonarQube Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        with:
+          projectBaseDir: "./"
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: "https://sonarcloud.io"
+
+      # Check for vulnerabilities in dependencies using Snyk (si besoin)
+      - name: Check vulnerabilities with Snyk
+        uses: snyk/actions/node@master
+        with:
+          args: test
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      # Run tests (optionnel)
+      - name: Run tests
+        run: npm test
+
+      # Build the project (si applicable)
+      - name: Build the project
+        run: npm run build
